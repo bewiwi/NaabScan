@@ -4,6 +4,7 @@ use warnings;
 use XML::Simple;
 use DBI;
 use Data::Dumper;
+use Error;
 use NAABSCAN::HOST;
 
 require 'config.pl';
@@ -18,66 +19,63 @@ my $dbh = DBI->connect('DBI:mysql:'.$dbBase, $dbUser, $dbPwd
 my @files = <./xml/*.xml>;
 foreach my $filexmltest (@files)
 {
-    my $parser = XML::Simple->new( KeepRoot => 1,ForceArray=>1 );
-    my $xmlScan = $parser->XMLin($filexmltest);
+    eval{
+        my $parser = XML::Simple->new( KeepRoot => 1,ForceArray=>1 );
+        my $xmlScan = $parser->XMLin($filexmltest);
 
-    my $command =  $xmlScan->{nmaprun}[0]->{args};
-    foreach my $host ( @{ $xmlScan->{nmaprun}[0]->{host} } )
-    {
-
-        my $NbHost = new NAABSCAN::HOST($dbh,$host->{address}[0]->{addr});
-        $NbHost->save();
-
-        my $starttime =  $host->{'starttime'};
-        my $NbScan = new NAABSCAN::SCAN($dbh,$starttime,$NbHost->{id});
-        if ( $NbScan->{id} )
-        {
-            print 'Scan already in database '.$host->{address}[0]->{addr}."\n";
-        }
-        $NbScan->save();
-
-        foreach my $port ( @{ $host->{ports}[0]->{port} }  )
+        my $command =  $xmlScan->{nmaprun}[0]->{args};
+        foreach my $host ( @{ $xmlScan->{nmaprun}[0]->{host} } )
         {
 
-            #my $protocol = $port->{protocol};
-            my $portNumber = $port->{portid};
-            my $state = $port->{state}[0]->{state};
-            
-            #service
-            my @serviceNameArray =  keys %{$port->{service}};
-            my $serviceName = $serviceNameArray[0];
-            
-            my $service = $port->{service}->{$serviceName};
-           
-            my $product = $service->{product};
-            my $productVersion = $service->{version};
-            my $serviceExtra = $service->{extrainfo};
-            my $ostype = $service->{ostype};
+            my $NbHost = new NAABSCAN::HOST($dbh,$host->{address}[0]->{addr});
+            $NbHost->save();
 
-            my $scriptInfo='';
-            if( $port->{script})
+            my $starttime =  $host->{'starttime'};
+            my $NbScan = new NAABSCAN::SCAN($dbh,$starttime,$NbHost->{id});
+            if ( $NbScan->{id} )
             {
-                for my $key ( keys %{ $port->{script} } )
-                {
-                    my $script = $port->{script}->{$key};
-                    $scriptInfo .= $key.' '.$script->{output}."\n";
-                }
+                print 'Scan already in database '.$host->{address}[0]->{addr}."\n";
             }
+            $NbScan->save();
 
-            my $NbPort = new NAABSCAN::PORT(
-                $dbh,
-                $NbScan->{id},
-                $port->{protocol},
-                $port->{portid},
-                $port->{state}[0]->{state},
-                $serviceName,
-                $service->{product},
-                $service->{version},
-                $service->{extrainfo},
-                $service->{ostype}
-            );
-            $NbPort->save();
+            foreach my $port ( @{ $host->{ports}[0]->{port} }  )
+            {
+
+                #service
+                my @serviceNameArray =  keys %{$port->{service}};
+                my $serviceName = $serviceNameArray[0];
+                my $service = $port->{service}->{$serviceName};
+
+                my $scriptInfo='';
+                if( $port->{script})
+                {
+                    for my $key ( keys %{ $port->{script} } )
+                    {
+                        my $script = $port->{script}->{$key};
+                        $scriptInfo .= $key.' '.$script->{output}."\n";
+                    }
+                }
+
+                my $NbPort = new NAABSCAN::PORT(
+                    $dbh,
+                    $NbScan->{id},
+                    $port->{protocol},
+                    $port->{portid},
+                    $port->{state}[0]->{state},
+                    $serviceName,
+                    $service->{product},
+                    $service->{version},
+                    $service->{extrainfo},
+                    $service->{ostype}
+                );
+                $NbPort->save();
+            }
         }
+    }; 
+    
+    if ($@)
+    {
+        print 'error in '.$filexmltest." : ".$@;
     }
 }
 $dbh->disconnect();

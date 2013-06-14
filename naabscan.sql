@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS `host` (
 CREATE TABLE IF NOT EXISTS `port` (
       `scan_id` int(255) DEFAULT NULL,
       `protocol` text,
+      `number` int(6),
       `state` text,
       `service_name` text,
       `service_product` text,

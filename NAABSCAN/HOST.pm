@@ -120,11 +120,12 @@ sub save
     if (! $this->{id})
     {
         $this->{dbh}->do(
-            'INSERT INTO port (`scan_id`, `protocol`, `state`, `service_name`, `service_product`, `service_version`, `service_extra`, `service_ostype`, `script_info`)
-            VALUES (?,?,?,?,?,?,?,?,?)',
+            'INSERT INTO port (`scan_id`, `protocol`,`number`, `state`, `service_name`, `service_product`, `service_version`, `service_extra`, `service_ostype`, `script_info`)
+            VALUES (?,?,?,?,?,?,?,?,?,?)',
             undef,
             $this->{scanId},
             $this->{protocol},
+            $this->{portNumber},
             $this->{state},
             $this->{serviceName},
             $this->{product},
