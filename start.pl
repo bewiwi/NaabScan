@@ -77,6 +77,7 @@ while (defined(my $xmlFile=readdir XMLRep))
                     $service->{product},
                     $service->{version},
                     $service->{extrainfo},
+                    $scriptInfo,
                     $service->{ostype}
                 );
                 $NbPort->save();
