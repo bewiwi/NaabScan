@@ -1,3 +1,5 @@
 xml/wait/*.xml
 xml/done/*.xml
 config.pl
+www/node_modules/*
+www/config.js
