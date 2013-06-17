@@ -5,6 +5,7 @@ use XML::Simple;
 use DBI;
 use Data::Dumper;
 use Error;
+use File::Basename;
 use NAABSCAN::HOST;
 
 require 'config.pl';
@@ -12,13 +13,19 @@ our $dbHost;
 our $dbUser ;
 our $dbBase ;
 our $dbPwd ;
+our $xmlFolder;
+our $doneFolder;
 
 my $dbh = DBI->connect('DBI:mysql:'.$dbBase, $dbUser, $dbPwd
                    ) || die "Could not connect to database: $DBI::errstr";
 
-my @files = <./xml/*.xml>;
-foreach my $filexmltest (@files)
+opendir(XMLRep,$xmlFolder) or die "$xmlFolder error";
+while (defined(my $xmlFile=readdir XMLRep))
 {
+    my $filexmltest = $xmlFolder.'/'.$xmlFile;
+    if(! -f $filexmltest || $filexmltest !~ /.*\.xml/){
+        next
+    }
     eval{
         my $parser = XML::Simple->new( KeepRoot => 1,ForceArray=>1 );
         my $xmlScan = $parser->XMLin($filexmltest);
@@ -35,8 +42,12 @@ foreach my $filexmltest (@files)
             if ( $NbScan->{id} )
             {
                 print 'Scan already in database '.$host->{address}[0]->{addr}."\n";
+                next;
             }
-            $NbScan->save();
+            else
+            {
+                $NbScan->save();
+            }
 
             foreach my $port ( @{ $host->{ports}[0]->{port} }  )
             {
@@ -76,6 +87,13 @@ foreach my $filexmltest (@files)
     if ($@)
     {
         print 'error in '.$filexmltest." : ".$@;
+    }
+    else
+    {
+        print $xmlFile." OK\n";
+        my $timestamp = time;
+        rename($filexmltest,$doneFolder.'/'.$timestamp.'-'.$xmlFile);
+
     }
 }
 $dbh->disconnect();

@@ -1,2 +1,3 @@
-xml/*.xml
+xml/wait/*.xml
+xml/done/*.xml
 config.pl

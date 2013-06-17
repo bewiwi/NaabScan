@@ -3,3 +3,5 @@ $dbHost = 'localhost';
 $dbUser = 'naabscan';
 $dbBase = 'naabscan';
 $dbPwd = 'naabscan';
+$xmlFolder = './xml/wait/';
+$doneFolder = './xml/done/';
