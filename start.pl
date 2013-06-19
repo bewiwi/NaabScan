@@ -16,10 +16,18 @@ our $dbPwd ;
 our $xmlFolder;
 our $doneFolder;
 
-my $dbh = DBI->connect('DBI:mysql:'.$dbBase, $dbUser, $dbPwd
-                   ) || die "Could not connect to database: $DBI::errstr";
+my $die=0;
+until ($die)
+{
+    my $dbh = DBI->connect('DBI:mysql:'.$dbBase, $dbUser, $dbPwd
+    ) || die "Could not connect to database: $DBI::errstr";
 
-my $xmlImport = NAABSCAN::XML->new( $dbh, $xmlFolder,$doneFolder);
-$xmlImport->scan();
+    my $xmlImport = NAABSCAN::XML->new( $dbh, $xmlFolder,$doneFolder);
+    $xmlImport->scan();
 
-$dbh->disconnect();
+    $dbh->disconnect();
+
+    #wait 20 sec
+    sleep(20);
+}
+
