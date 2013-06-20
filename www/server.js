@@ -8,6 +8,7 @@ var app = express();
 //Host
 app.get('/host/:id',hosts.findById);
 app.get('/host',hosts.findAll);
+app.get('/host/addOrUpdate/:ip',hosts.addOrUpdate);
 
 //Scan
 app.get('/scan/:id',scans.findById);

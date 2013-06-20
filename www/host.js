@@ -16,3 +16,33 @@ exports.findAll = function(req,res) {
             });
 };
 
+exports.addOrUpdate = function(req,res) {
+    var ip = req.params.ip;
+    
+    var CheckIP = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+    if(! CheckIP.test(ip))
+    {
+        console.log("Your IP Address Is NOT Valid.");
+        res.send(404, 'Et Mon *** c\'est une ip ?');
+        return false;
+    }
+
+    var sql = 'SELECT id FROM host WHERE ip = ?';
+    var exist=false;
+    con.query(sql,ip,function (err,results){
+            if (undefined == results[0]){
+            exist = true;
+            }
+            });
+    if ( exist )
+    {
+        sql = 'UPDATE host SET scan = 1 WHERE ip = ?';
+    }
+    else
+    {
+        sql = 'INSERT INTO host (ip,scan) VALUES ( ? , 1 )';
+    }
+    con.query(sql,ip,function (err,results){
+            res.send(200,'Ok naab');
+            });
+};
