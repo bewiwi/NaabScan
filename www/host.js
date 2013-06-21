@@ -28,21 +28,20 @@ exports.addOrUpdate = function(req,res) {
     }
 
     var sql = 'SELECT id FROM host WHERE ip = ?';
-    var exist=false;
+    var exist = 1;
     con.query(sql,ip,function (err,results){
-            if (undefined == results[0]){
-            exist = true;
+            if ( typeof(results[0]) == 'undefined' ){
+            sql = 'INSERT INTO host (ip,scan) VALUES ( ? , 1 )';
+            }else{
+            sql = 'UPDATE host SET scan = 1 WHERE ip = ?';
             }
+            con.query(sql,ip,function (err,results){
+                if (err){
+                //                res.jsonp(err);        
+                res.send(500,'ERROR ');
+                }
+                res.send(200,'Ok naab');
+                });
             });
-    if ( exist )
-    {
-        sql = 'UPDATE host SET scan = 1 WHERE ip = ?';
-    }
-    else
-    {
-        sql = 'INSERT INTO host (ip,scan) VALUES ( ? , 1 )';
-    }
-    con.query(sql,ip,function (err,results){
-            res.send(200,'Ok naab');
-            });
+
 };

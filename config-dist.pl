@@ -5,3 +5,4 @@ $dbBase = 'naabscan';
 $dbPwd = 'naabscan';
 $xmlFolder = './xml/wait/';
 $doneFolder = './xml/done/';
+$nmapArg = '-A -PN'
