@@ -1,4 +1,4 @@
-package NAABSCAN::SCAN;
+package NAABSCAN::NMAP;
 use Data::Dumper;
 
 
@@ -25,8 +25,6 @@ sub new
 sub scan
 {
     my $this = shift ;
-    #print $this->{ip};
-    #print $this->{nmapArg};
     my $cmd = 'nmap '.$this->{nmapArg}.' -oX '.$this->{xmlFolder}.'/'.$this->{ip}.'-autoscan.xml '.$this->{ip};
     my $ret = `$cmd`;
     if ( $? != 0 )

@@ -36,6 +36,7 @@ sub save
 }
 
 package NAABSCAN::SCAN;
+use Data::Dumper;
 
 sub new
 {
@@ -65,12 +66,8 @@ sub save
     my $this = shift ;
     if (! $this->{id})
     {
-        $this->{dbh}->do(
-            'INSERT INTO scan (host_id,date) VALUES (?,?)',
-            undef,
-            $this->{hostId},
-            $this->{date}
-        );
+        my $request = $this->{dbh}->prepare('INSERT INTO scan (host_id,date) VALUES (?,?)');
+        $request->execute($this->{hostId}, $this->{date} );
         $this->getId();
     }
     return $this->{id};

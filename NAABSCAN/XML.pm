@@ -51,7 +51,6 @@ sub scan
 
                 my $NbHost = new NAABSCAN::HOST($dbh,$host->{address}[0]->{addr});
                 $NbHost->save();
-
                 my $starttime =  $host->{'starttime'};
                 my $NbScan = new NAABSCAN::SCAN($dbh,$starttime,$NbHost->{id});
                 if ( $NbScan->{id} )

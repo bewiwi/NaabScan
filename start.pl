@@ -7,7 +7,7 @@ use Data::Dumper;
 use Error;
 use File::Basename;
 use NAABSCAN::XML;
-use NAABSCAN::SCAN;
+use NAABSCAN::NMAP;
 
 
 require 'config.pl';
@@ -35,9 +35,13 @@ until ($die)
     my $requestStr = "SELECT ip from host WHERE scan = 1";
     my $request = $dbh->prepare($requestStr);
     $request->execute();
-    foreach my $host ( $request->fetchrow_hashref() )
+    my $host;
+    while ( $host =  $request->fetchrow_hashref() )
     {
-        my $scan = NAABSCAN::SCAN->new($host->{ip},$nmapArg,$xmlFolder);
+        print Dumper $host;
+        my $ip = $host->{ip};
+        print "test";
+        my $scan = NAABSCAN::NMAP->new($ip,$nmapArg,$xmlFolder);
         my $ret = $scan->scan();
         if ($ret)
         {
