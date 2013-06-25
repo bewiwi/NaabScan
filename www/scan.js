@@ -15,7 +15,7 @@ exports.getLastHost = function(req,res) {
         res.send('Fucking Naab is not a integer');
         return false;
     }
-    var sql = ' SELECT * FROM scan s JOIN host h ON h.id = s.host_id  ORDER BY s.date DESC LIMIT ?';
+    var sql = ' SELECT s.id , s.date, s.host_id ,h.ip, h.scan  FROM scan s JOIN host h ON h.id = s.host_id  ORDER BY s.date DESC LIMIT ?';
     con.query(sql, num ,function (err,results){
             console.log(err);
             res.jsonp(results);
