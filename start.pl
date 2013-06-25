@@ -18,6 +18,7 @@ our $dbPwd ;
 our $xmlFolder;
 our $doneFolder;
 our $nmapArg;
+our $triggers;
 
 my $die=0;
 $|=1;
@@ -28,7 +29,7 @@ until ($die)
     ) || die "Could not connect to database: $DBI::errstr";
 
     #Import Host
-    my $xmlImport = NAABSCAN::XML->new( $dbh, $xmlFolder,$doneFolder);
+    my $xmlImport = NAABSCAN::XML->new( $dbh, $xmlFolder,$doneFolder,$triggers);
     $xmlImport->scan();
 
     #Rescan Host

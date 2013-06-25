@@ -73,6 +73,35 @@ sub save
     return $this->{id};
 }
 
+sub getScanPlain
+{
+    my $this = shift ;
+    my $sqlScan = 'SELECT number,protocol,state,
+    service_name,service_product,service_version,
+    service_extra,service_ostype,script_info
+    FROM  port p    
+    WHERE p.scan_id = ?';
+
+    my $reqScan = $this->{dbh}->prepare($sqlScan);
+    $reqScan->execute($this->{id});
+
+    my $scanString;
+    while ( my $res =  $reqScan->fetchrow_hashref ) {
+        $scanString .= $res->{number}."/".
+                        $res->{protocol}." ".
+                        $res->{state}." ".
+                        $res->{service_name}." ".
+                        $res->{service_product}." ".
+                        $res->{service_version}." ".
+                        $res->{service_extra}." ".
+                        $res->{service_ostype}."\n   ".
+                        $res->{script_info}."\n\n ";
+    }
+
+    return $scanString;
+
+}
+
 package NAABSCAN::PORT;
 
 sub new

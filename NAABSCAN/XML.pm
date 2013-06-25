@@ -4,6 +4,7 @@ use Data::Dumper;
 use Error;
 use File::Basename;
 use NAABSCAN::HOST;
+use JSON qw( encode_json );
 
 
 sub new
@@ -12,13 +13,15 @@ sub new
         $classe,
         $dbh,
         $xmlFolder,
-        $doneFolder
+        $doneFolder,
+        $triggers
     )=@_;
 
     my $this = {
         "dbh" => $dbh,
         "xmlFolder" => $xmlFolder,
-        "doneFolder" => $doneFolder
+        "doneFolder" => $doneFolder,
+        "triggers" => $triggers
     };
     bless( $this, $classe );
     return $this;
@@ -38,6 +41,8 @@ sub scan
     while (defined(my $xmlFile=readdir XMLRep))
     {
         my $filexmltest = $xmlFolder.'/'.$xmlFile;
+        my $NbScan;
+        my $NbHost;
         if(! -f $filexmltest || $filexmltest !~ /.*\.xml/){
             next
         }
@@ -49,10 +54,10 @@ sub scan
             foreach my $host ( @{ $xmlScan->{nmaprun}[0]->{host} } )
             {
 
-                my $NbHost = new NAABSCAN::HOST($dbh,$host->{address}[0]->{addr});
+                $NbHost = new NAABSCAN::HOST($dbh,$host->{address}[0]->{addr});
                 $NbHost->save();
                 my $starttime =  $host->{'starttime'};
-                my $NbScan = new NAABSCAN::SCAN($dbh,$starttime,$NbHost->{id});
+                $NbScan = new NAABSCAN::SCAN($dbh,$starttime,$NbHost->{id});
                 if ( $NbScan->{id} )
                 {
                     print 'Scan already in database '.$host->{address}[0]->{addr}."\n";
@@ -95,6 +100,41 @@ sub scan
                         $service->{ostype}
                     );
                     $NbPort->save();
+                }
+            }
+           
+
+            #TRIGGERS
+            $ENV{scan} = $NbScan->getScanPlain();
+            $ENV{ip} = $NbHost->{addr}; 
+
+            my $triggers = $this->{triggers}; 
+            foreach my $key (keys %$triggers)
+            {
+                my $trigger =  $triggers->{$key};
+                my $sql = $trigger->{sql};
+                
+                #PlaceHolders
+                $sql =~ s/<scanid>/$NbScan->{id}/g;
+
+                my $request = $dbh->prepare( $sql );    
+
+                $request->execute();
+                while ( $res =  $request->fetchrow_arrayref() )
+                {
+                    print 'Trigger "'.$key.'" OK pour le scan '.$NbScan->{id}."\n";
+                    print 'Exec : '.$trigger->{script}."\n";
+                    my $resScript = encode_json $res;
+                    
+                    # print  $resScript;
+                    $ENV{row} = $resScript;
+                    `$trigger->{script}`;
+                    if ( $? != 0 )
+                    {
+                        print "return code != 0 for ".$key; 
+                    }
+
+
                 }
             }
         }; 
