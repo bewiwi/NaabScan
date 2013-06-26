@@ -16,34 +16,30 @@ $nmapArg = '-A -PN';
 #SQL
 #placeholder :
 #<scanid> = id du scan
-#
-#All request
-$sqlAll = 'SELECT 1';
-#Check VNC
-$sqlVNC = "SELECT p.number
-FROM host h,scan s , port p
-Where s.id = <scanid>
-AND  h.id = s.host_id
-AND s.id = p.scan_id
-AND UPPER(p.service_name) like '%VNC%'";
 
+$sqlAll = 'SELECT 1';
+$sqlVNC = "SELECT CONCAT( h.ip,':',p.number-5900) 
+    FROM host h, scan s, port p
+    WHERE 1 =1
+    AND s.id = <scanid>
+    AND h.id = s.host_id
+    AND s.id = p.scan_id
+    AND UPPER( p.service_name ) LIKE  '%VNC%'
+    AND UPPER( p.service_name ) NOT LIKE  '%HTTP%'";
 
 #Script
-#send all report with mail
-$scriptMail = 'echo $row | mail -s Test mail@mail.fr';
-#send ip and port with mail
-$scriptVnc = 'echo $ip $row | mail -s VNC mail@mail.fr';
-
+#Env variable $scan, $row (json) and $ip
 
 #Triggers
+$mail='mon@mail.fr monmail2@test.fr';
+
 $triggers = {
     'all' => {
         sql => $sqlAll,
-        script => $scriptMail
-
+        script => 'echo "$scan" | mail -s Test "'.$mail.'"'
     },
     'vnc' => {
         sql => $sqlVNC,
-        script => $scriptVnc
+        script => './script/vncscript.sh "'.$mail.'"'
     }
 };
