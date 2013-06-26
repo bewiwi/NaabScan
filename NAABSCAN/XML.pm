@@ -147,7 +147,7 @@ sub scan
         {
             print $xmlFile." OK\n";
             my $timestamp = time;
-            rename($filexmltest,$doneFolder.'/'.$timestamp.'-'.$xmlFile);
+            rename($filexmltest,$doneFolder.'/'.$timestamp.'-'.$NbHost->{addr}.'.xml');
         }
     }
 }
