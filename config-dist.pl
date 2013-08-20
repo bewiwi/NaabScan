@@ -11,7 +11,7 @@ $doneFolder = './xml/done/';
 
 #Autoscan, Nmap arguments
 $nmapArg = '-A -PN';
-
+$nmapThread = 10;
 
 #SQL
 #placeholder :
