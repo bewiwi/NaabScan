@@ -25,8 +25,13 @@ sub new
 sub scan
 {
     my $this = shift ;
-    my $cmd = 'nmap '.$this->{nmapArg}.' -oX '.$this->{xmlFolder}.'/'.$this->{ip}.'-autoscan.xml '.$this->{ip};
+    my $file =$this->{xmlFolder}.'/'.$this->{ip};
+    
+    my $cmd = 'nmap '.$this->{nmapArg}.' -oX '.$file.'-autoscan.inprogress '.$this->{ip};
     my $ret = `$cmd`;
+    
+    `mv $file-autoscan.inprogress $file-autoscan.xml`;
+    
     if ( $? != 0 )
     {
         print "Nmap ERROR :\n";
