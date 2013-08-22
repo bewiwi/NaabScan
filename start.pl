@@ -33,7 +33,9 @@ sub dbConnect
 }
 
 # Thread Part
-my $scanQueue = new Thread::Queue; 
+my $scanQueue = new Thread::Queue;
+
+#Start Nmap Worker
 my $scanThread = async {
     while (my $scan = $scanQueue->dequeue) { 
 
@@ -59,6 +61,48 @@ my $scanThread = async {
     }
 } for (1..$nmapThread);
 
+#Start Nmap Checker
+my $scanCheck = async {
+    until ($die){
+
+        #Connect dB
+        my $dbh = dbConnect;
+
+        #Check Host to Scan
+        my $requestStr = "SELECT ip from host WHERE scan = 1";
+        my $request = $dbh->prepare($requestStr);
+        $request->execute();
+
+        while ( my $host =  $request->fetchrow_hashref() )
+        {
+            my $ip = $host->{ip};
+            my $scan = NAABSCAN::NMAP->new($ip,$nmapArg,$xmlFolder);
+
+            #If scan is not program add him
+            my $isInQueue = 0;    
+            my $count=0;
+            while(my $scanProg = $scanQueue->peek($count))
+            {
+                $count++;
+                print "Compare  $scanProg->{ip} && $scan->{ip}\n";
+                if($scanProg->{ip} eq $scan->{ip} )
+                {
+                    print "Already in pool $scan->{ip}\n";
+                    $isInQueue = 1
+                }
+            }
+            if ( $isInQueue == 0)
+            {
+                print "Add in pool $scan->{ip}\n";
+                $scanQueue->enqueue($scan);
+            }
+
+        }
+        $request->finish();
+        $dbh->disconnect();
+        sleep(5);
+    }
+};
 
 #INIT
 #change status of  scan in "progress" (2) to "to be scan" (1)
@@ -72,7 +116,7 @@ $dbhTemp->disconnect();
 #MAIN LOOP
 until ($die)
 {
-    
+
     #Connect DB
     my $dbh = dbConnect(); 
 
@@ -80,41 +124,9 @@ until ($die)
     my $xmlImport = NAABSCAN::XML->new( $dbh, $xmlFolder,$doneFolder,$triggers);
     $xmlImport->scan();
 
-    #Rescan Host
-    my $requestStr = "SELECT ip from host WHERE scan = 1";
-    my $request = $dbh->prepare($requestStr);
-    $request->execute();
-    my $host;
-    while ( $host =  $request->fetchrow_hashref() )
-    {
-        my $ip = $host->{ip};
-        my $scan = NAABSCAN::NMAP->new($ip,$nmapArg,$xmlFolder);
-
-        #If scan is not program add him
-        my $isInQueue = 0;    
-        my $count=0;
-        while(my $scanProg = $scanQueue->peek($count))
-        {
-            $count++;
-            print "Compare  $scanProg->{ip} && $scan->{ip}\n";
-            if($scanProg->{ip} eq $scan->{ip} )
-            {
-                print "Already in pool $scan->{ip}\n";
-                $isInQueue = 1
-            }
-        }
-        if ( $isInQueue == 0)
-        {
-            print "Add in pool $scan->{ip}\n";
-            $scanQueue->enqueue($scan);
-        }
-
-    }
-    $request->finish();
-
     #disconnect DB
     $dbh->disconnect();
-    
+
     #wait
     sleep(5);
 }
