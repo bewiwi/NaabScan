@@ -1,9 +1,0 @@
-{
-    "name" : "naabscan-web",
-    "version" : "0.0.1",
-    "description" : "WTF? you're a naab ?",
-    "dependencies" : {
-        "mysql" : "*",
-        "express" : "3.x"
-        }
-}
