@@ -13,6 +13,9 @@ $doneFolder = './xml/done/';
 $nmapArg = '-A -PN';
 $nmapThread = 10;
 
+#Trigger
+$triggerThread = 4;
+
 #SQL
 #placeholder :
 #<scanid> = id du scan

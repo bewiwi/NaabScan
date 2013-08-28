@@ -8,6 +8,7 @@ use Error;
 use File::Basename;
 use NAABSCAN::XML;
 use NAABSCAN::NMAP;
+use NAABSCAN::TRIGGER;
 use Thread qw(async);
 use Thread::Queue;
 
@@ -21,6 +22,7 @@ our $doneFolder;
 our $nmapArg;
 our $nmapThread;
 our $triggers;
+our $triggerThread;
 
 my $die=0;
 $|=1;
@@ -34,6 +36,7 @@ sub dbConnect
 
 # Thread Part
 my $scanQueue = new Thread::Queue;
+my $triggerQueue = new Thread::Queue;
 
 #Start Nmap Worker
 my $scanThread = async {
@@ -45,17 +48,19 @@ my $scanThread = async {
 
         #change the state in database to inprogress (2)
         my $updateStr = "UPDATE host SET scan = 2 WHERE ip = ? ";
-        my $update = $dbh->prepare($updateStr);
-        $update->execute($scan->{ip});
-
+        my $update = $dbh->do($updateStr,undef,$scan->{ip}) ;
+        
+        $dbh->disconnect();
+        
         #Start scan
         $scan->scan();
 
+        $dbh = dbConnect;
         #change state to null
         print "Scan Finish $scan->{ip}\n";
         $updateStr = "UPDATE host SET scan = NULL WHERE ip = ? ";
-        $update = $dbh->prepare($updateStr);
-        $update->execute($scan->{ip});
+        $update = $dbh->do($updateStr,undef,$scan->{ip});
+        
         $dbh->disconnect();
 
     }
@@ -78,16 +83,14 @@ my $scanCheck = async {
             my $ip = $host->{ip};
             my $scan = NAABSCAN::NMAP->new($ip,$nmapArg,$xmlFolder);
 
-            #If scan is not program add him
+            #If scan is not program add 
             my $isInQueue = 0;    
             my $count=0;
             while(my $scanProg = $scanQueue->peek($count))
             {
                 $count++;
-                print "Compare  $scanProg->{ip} && $scan->{ip}\n";
                 if($scanProg->{ip} eq $scan->{ip} )
                 {
-                    print "Already in pool $scan->{ip}\n";
                     $isInQueue = 1
                 }
             }
@@ -103,6 +106,15 @@ my $scanCheck = async {
         sleep(5);
     }
 };
+
+#Trigger Thread
+my $exectriggerThread = async {
+    while (my $trigger = $triggerQueue->dequeue) { 
+        $trigger->startCommand();
+    }
+} for (1..$triggerThread);
+
+
 
 #INIT
 #change status of  scan in "progress" (2) to "to be scan" (1)
@@ -121,8 +133,26 @@ until ($die)
     my $dbh = dbConnect(); 
 
     #Import Host
-    my $xmlImport = NAABSCAN::XML->new( $dbh, $xmlFolder,$doneFolder,$triggers);
-    $xmlImport->scan();
+    opendir(XMLRep,$xmlFolder) or die "$xmlFolder error";
+    while (defined(my $xmlFile=readdir XMLRep))
+    {
+        my $fileXml = $xmlFolder.'/'.$xmlFile;
+        if(! -f $fileXml || $fileXml !~ /.*\.xml/){
+            next
+        }
+        my $xmlImport = NAABSCAN::XML->new( $dbh, $fileXml,$doneFolder);
+        my @scans = $xmlImport->scan();
+        
+        foreach my $scan (@scans)
+        {
+            my $trigger = NAABSCAN::TRIGGER->new($dbh,$scan,$triggers);
+            if ($trigger->checkTrigger())
+            {
+               $triggerQueue->enqueue($trigger);
+            }
+        }
+
+    }
 
     #disconnect DB
     $dbh->disconnect();
