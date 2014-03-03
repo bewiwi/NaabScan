@@ -13,18 +13,39 @@ sub new
         $dbh,
         $xmlFile,
         $doneFolder,
+        $geoipDatabase,
     )=@_;
 
     my $this = {
         "dbh" => $dbh,
         "xmlFile" => $xmlFile,
         "doneFolder" => $doneFolder,
+        "geoipDatabase" => $geoipDatabase,
     };
     bless( $this, $classe );
     return $this;
 
 }
 
+sub  getGeoInformation
+{
+    my $this = shift ;
+    my $ip = shift;
+    if ( -e $this->{geoipDatabase} )
+    {  
+        use Geo::IP;
+        my $gi = Geo::IP->open($this->{geoipDatabase}, GEOIP_STANDARD);
+        my $geoInfo = $gi->record_by_addr($ip);
+        return {
+            "country" => $geoInfo->country_code,
+            "longitude" => $geoInfo->longitude,
+            "latitude" => $geoInfo->latitude,
+        };
+    }else{
+        print("ERROR geoipDAtabase not found");
+        return 0;
+    }
+}
 
 sub scan
 {
@@ -57,6 +78,15 @@ sub scan
             }
             else
             {
+                my $geoInfo = $this->getGeoInformation($host->{address}[0]->{addr});
+                if ( $geoInfo )
+                {
+                    $NbScan->addGeoInfo(
+                                    $geoInfo->{country},
+                                    $geoInfo->{longitude},
+                                    $geoInfo->{latitude}
+                    );
+                } 
                 $NbScan->save();
             }
 

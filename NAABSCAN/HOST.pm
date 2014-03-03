@@ -66,11 +66,26 @@ sub save
     my $this = shift ;
     if (! $this->{id})
     {
-        my $request = $this->{dbh}->prepare('INSERT INTO scan (host_id,date) VALUES (?,?)');
-        $request->execute($this->{hostId}, $this->{date} );
+        my $request = $this->{dbh}->prepare('INSERT INTO scan (host_id,date,country,longitude,latitude) VALUES (?,?,?,?,?)');
+        $request->execute(
+                            $this->{hostId},
+                            $this->{date} , 
+                            $this->{countryCode},
+                            $this->{longitude},
+                            $this->{latitude}
+        );
         $this->getId();
     }
     return $this->{id};
+}
+
+sub addGeoInfo
+{
+    my $this = shift ;
+    my ( $countryCode, $longitude ,$latitude ) = @_;
+    $this->{countryCode} = $countryCode;
+    $this->{longitude} = $longitude;
+    $this->{latitude} = $latitude;
 }
 
 sub getScanPlain

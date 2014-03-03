@@ -23,6 +23,7 @@ our $nmapArg;
 our $nmapThread;
 our $triggers;
 our $triggerThread;
+our $geoipDatabase; 
 
 my $die=0;
 $|=1;
@@ -140,7 +141,7 @@ until ($die)
         if(! -f $fileXml || $fileXml !~ /.*\.xml/){
             next
         }
-        my $xmlImport = NAABSCAN::XML->new( $dbh, $fileXml,$doneFolder);
+        my $xmlImport = NAABSCAN::XML->new( $dbh, $fileXml,$doneFolder, $geoipDatabase);
         my @scans = $xmlImport->scan();
         
         foreach my $scan (@scans)

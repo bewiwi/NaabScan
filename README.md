@@ -11,6 +11,7 @@ Download or clone NaabScan, unzip if necessary and config
 cp config-dist.pl config.pl
 vim config.pl
 ```
+If you want geo information please download GeoIp database : http://dev.maxmind.com/geoip/legacy/geolite/
 You must edit config.pl to set database parameter, number of worker, nmap config, xml folder and trigger
 
 ### Usage

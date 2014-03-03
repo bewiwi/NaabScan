@@ -9,6 +9,10 @@ $dbPwd = 'naabscan';
 $xmlFolder = './xml/wait/';
 $doneFolder = './xml/done/';
 
+#Geoip
+#$geoipDatabase = './GeoLiteCity.dat';
+$geoipDatabase = '';
+
 #Autoscan, Nmap arguments
 $nmapArg = '-A -PN';
 $nmapThread = 10;
